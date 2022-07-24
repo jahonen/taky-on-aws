@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: 2010-09-09
+Metadata:
+  MyMeta:
+    apple: red
+    bannna: yellow
+Parameters:
+  owner:
+    Description: This stack owner's name
+    Type: String
+    Default: 'MAAKK'
+Resources:
+  MyTAKSecurity:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: MyTAKSecurity
+      GroupDescription: 'This is my ATAK server security group'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          CidrIp: 0.0.0.0/0
+          ToPort: 22
+      Tags:
+        - Key: Name
+          Value: MySG
+        - Key: CreatedBy
+          Value: CloudFormation
+  WebServerIngress:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      CidrIp: 0.0.0.0/0
+      Description: TAKIngress By CloudFormation
+      FromPort: 8087
+      GroupName: !Ref MyTAKSecurity
+      IpProtocol: tcp
+      ToPort: 8087
+  MyTAKServer:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: ami-0917076ab9780844d
+      InstanceType: t3.small
+      SecurityGroups:
+        - !Ref MyTAKSecurity
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - 'TAKServer ${param}'
+            - { param: !Ref owner }
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash
+            yum update -y 
+            sudo python3 -m pip install taky
+Outputs:
+  MyStackRegion:
+    Description: This is the output description.
+    Value: !Ref 'AWS::Region'
+  StackOwner:
+    Description: This stack creator
+    Value: !Ref owner
